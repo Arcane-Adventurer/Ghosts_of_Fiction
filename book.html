@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>جزئیات کتاب — کتابخانه آزاد افغانستان</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script>var relativePath = '../';</script>
+  <script src="../js/app.js"></script>
+  <script src="../js/components.js"></script>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<section class="book-detail-hero" id="book-hero" style="display:none">
+  <div class="container">
+    <div class="breadcrumb" style="color:rgba(255,255,255,.5);margin-bottom:1.5rem">
+      <a href="../index.html" style="color:rgba(255,255,255,.5)">خانه</a>
+      <span class="sep">›</span>
+      <a href="books.html" style="color:rgba(255,255,255,.5)">کتاب‌ها</a>
+      <span class="sep">›</span>
+      <span id="bc-title" style="color:#fff"></span>
+    </div>
+    <div style="display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap">
+      <div class="book-detail-cover" id="book-cover">📖</div>
+      <div style="flex:1;min-width:260px">
+        <div id="book-badge"></div>
+        <h1 style="color:#fff;margin:.5rem 0 .35rem;font-size:clamp(1.4rem,3vw,2rem)" id="book-title">—</h1>
+        <div style="color:rgba(255,255,255,.65)" id="book-author"></div>
+        <div class="book-meta-grid" id="book-meta" style="margin:1.25rem 0"></div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem">
+          <button class="btn btn-gold btn-lg" onclick="scrollToReader()">📖 خواندن آنلاین</button>
+          <button class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,.4);color:#fff" onclick="doDownload()">⬇️ دانلود PDF</button>
+          <a id="btn-archive" href="#" target="_blank" class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">🔗 منبع اصلی</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="loading-state" class="loading-overlay" style="min-height:400px">
+  <div class="spinner"></div><span>در حال بارگذاری...</span>
+</div>
+
+<section class="section" id="reader-section" style="display:none">
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+      <h2 style="font-size:1.1rem">📖 خواندن آنلاین</h2>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="toggleFullscreen()">⛶ تمام‌صفحه</button>
+        <button class="btn btn-gold btn-sm" onclick="doDownload()">⬇️ دانلود PDF</button>
+      </div>
+    </div>
+    <div class="pdf-viewer-container" id="pdf-container">
+      <div class="pdf-toolbar">
+        <span class="page-info" style="color:rgba(255,255,255,.7);font-size:.82rem">کتاب از archive.org بارگذاری می‌شود</span>
+        <button onclick="openExternal()" style="background:rgba(255,255,255,.1);color:#fff;border:none;padding:.35rem .75rem;border-radius:6px;cursor:pointer;font-size:.85rem">↗ باز کردن در تب جدید</button>
+      </div>
+      <iframe id="pdf-frame" class="pdf-frame" allowfullscreen loading="lazy" title="PDF Reader"></iframe>
+    </div>
+    <div style="margin-top:1rem;padding:1rem;background:var(--gold-pale);border-radius:var(--radius-md);border-right:4px solid var(--gold);font-size:.85rem;color:var(--ink-soft)">
+      💡 <strong>نکته:</strong> اگر کتاب بارگذاری نشد، روی «باز کردن در تب جدید» کلیک کنید یا از دکمه «دانلود PDF» استفاده کنید.
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--surface2)" id="desc-section">
+  <div class="container" style="max-width:720px">
+    <h2 style="margin-bottom:1rem">درباره این کتاب</h2>
+    <p id="book-description" style="color:var(--ink-soft);line-height:1.9"></p>
+  </div>
+</section>
+
+<section class="section" id="related-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">پیشنهادی</div>
+      <h2 class="section-title">کتاب‌های مرتبط</h2>
+    </div>
+    <div class="grid-4" id="related-books"></div>
+  </div>
+</section>
+
+<div id="footer-root"></div>
+<div id="auth-modal-root"></div>
+
+<script>
+document.getElementById('navbar-root').innerHTML     = renderNavbar('books');
+document.getElementById('footer-root').innerHTML     = renderFooter();
+document.getElementById('auth-modal-root').innerHTML = renderAuthModal();
+
+var currentBook = null;
+var params = new URLSearchParams(window.location.search);
+var bookId = params.get('id');
+
+if (!bookId) {
+  window.location.href = 'books.html';
+} else {
+  // Try to find in fallback first (instant)
+  currentBook = FALLBACK_BOOKS.find(function(b){ return b.id === bookId; }) || null;
+  if (currentBook) {
+    showBook(currentBook);
+  } else {
+    // Not in fallback, try Supabase
+    API.getBook(bookId).then(function(book) {
+      if (!book) { window.location.href = 'books.html'; return; }
+      currentBook = book;
+      showBook(book);
+    });
+  }
+}
+
+function showBook(book) {
+  document.title = book.title_dari + ' — کتابخانه آزاد افغانستان';
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('book-hero').style.display = 'block';
+
+  var cat = CATEGORIES[book.category] || {};
+  var cover = document.getElementById('book-cover');
+  cover.style.background = book.cover_color || cat.color || '#EEF3FB';
+  cover.textContent = book.cover_emoji || cat.icon || '📖';
+
+  document.getElementById('bc-title').textContent  = book.title_dari.slice(0,30) + (book.title_dari.length>30?'…':'');
+  document.getElementById('book-badge').innerHTML  = UI.badgeFor(book.category);
+  document.getElementById('book-title').textContent = book.title_dari;
+  document.getElementById('book-author').textContent = [book.author, book.translator ? 'ترجمه: '+book.translator : ''].filter(Boolean).join(' · ');
+
+  var metas = [
+    book.author     && { label:'نویسنده',  value:book.author },
+    book.translator && { label:'مترجم',    value:book.translator },
+    book.year       && { label:'سال نشر',  value:book.year },
+    book.pages      && { label:'صفحات',    value:UI.formatNum(book.pages)+' صفحه' },
+    book.publisher  && { label:'ناشر',     value:book.publisher },
+    book.grade      && { label:'صنف',      value:UI.formatNum(book.grade) },
+    book.source     && { label:'منبع',     value:book.source }
+  ].filter(Boolean);
+  document.getElementById('book-meta').innerHTML = metas.map(function(m){
+    return '<div class="book-meta-item"><div class="label">'+m.label+'</div><div class="value">'+m.value+'</div></div>';
+  }).join('');
+
+  if (book.archive_url) document.getElementById('btn-archive').href = book.archive_url;
+
+  var embedUrl = book.gdrive_embed || (book.archive_url ? book.archive_url.replace('/details/','/embed/') : '');
+  if (embedUrl) {
+    document.getElementById('pdf-frame').src = embedUrl;
+    document.getElementById('reader-section').style.display = 'block';
+  }
+
+  var desc = book.description ||
+    '«' + book.title_dari + '»' +
+    (book.author ? ' نوشته ' + book.author : '') +
+    (book.translator ? '، ترجمه ' + book.translator : '') +
+    ' یکی از کتاب‌های موجود در کتابخانه آزاد افغانستان است. این کتاب به‌صورت رایگان در دسترس همگان قرار دارد.';
+  document.getElementById('book-description').textContent = desc;
+
+  // Related books
+  var related = FALLBACK_BOOKS.filter(function(b){ return b.category===book.category && b.id!==book.id; }).slice(0,4);
+  if (related.length) {
+    document.getElementById('related-books').innerHTML = related.map(UI.renderBookCard.bind(UI)).join('');
+  } else {
+    document.getElementById('related-section').style.display = 'none';
+  }
+
+  API.incrementViews(book.id);
+}
+
+function doDownload() {
+  if (!currentBook) return;
+  var url = currentBook.archive_url;
+  if (!url) { UI.toast('لینک دانلود موجود نیست','error'); return; }
+  var slug = url.split('/').pop();
+  API.incrementDownloads(currentBook.id);
+  window.open('https://archive.org/download/'+slug+'/'+slug+'.pdf','_blank');
+  UI.toast('دانلود آغاز شد ✅','success');
+}
+function scrollToReader() {
+  document.getElementById('reader-section').scrollIntoView({behavior:'smooth'});
+}
+function openExternal() {
+  if (currentBook && currentBook.archive_url) window.open(currentBook.archive_url,'_blank');
+}
+function toggleFullscreen() {
+  var el = document.getElementById('pdf-container');
+  if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+}
+</script>
+</body>
+</html>

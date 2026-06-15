@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>کتاب‌ها — کتابخانه آزاد افغانستان</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script>var relativePath = '../';</script>
+  <script src="../js/app.js"></script>
+  <script src="../js/components.js"></script>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<div style="background:var(--lapis-dk);color:#fff;padding:2rem 0">
+  <div class="container">
+    <div class="breadcrumb" style="color:rgba(255,255,255,.5)">
+      <a href="../index.html" style="color:rgba(255,255,255,.5)">خانه</a>
+      <span class="sep">›</span>
+      <span style="color:#fff">کتاب‌ها</span>
+    </div>
+    <h1 style="color:#fff;margin-top:.5rem" id="page-title">همه کتاب‌ها</h1>
+    <p style="color:rgba(255,255,255,.65);margin-top:.35rem;font-size:.9rem" id="page-subtitle">مجموعه کامل کتاب‌های دری</p>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="layout-sidebar">
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-block">
+          <div class="sidebar-block__head">📂 دسته‌بندی‌ها</div>
+          <div class="sidebar-nav-item active" onclick="setCat('all',this)">
+            <span>📚</span> همه کتاب‌ها <span class="sidebar-count">۲۰</span>
+          </div>
+          <div class="sidebar-nav-item" onclick="setCat('school',this)">
+            <span>📘</span> کتاب‌های مکتب <span class="sidebar-count">۱۲</span>
+          </div>
+          <div class="sidebar-nav-item" onclick="setCat('university',this)">
+            <span>🎓</span> کتاب‌های پوهنتون <span class="sidebar-count">۱</span>
+          </div>
+          <div class="sidebar-nav-item" onclick="setCat('history',this)">
+            <span>🏛️</span> تاریخ افغانستان <span class="sidebar-count">۵</span>
+          </div>
+          <div class="sidebar-nav-item" onclick="setCat('philosophy',this)">
+            <span>🧠</span> فلسفه <span class="sidebar-count">۲</span>
+          </div>
+        </div>
+
+        <div class="sidebar-block" id="subcat-block" style="display:none">
+          <div class="sidebar-block__head" id="subcat-head">زیردسته</div>
+          <div id="subcat-list"></div>
+        </div>
+
+        <div class="sidebar-block" id="grade-block" style="display:none">
+          <div class="sidebar-block__head">صنف</div>
+          <div id="grade-list" style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:.4rem"></div>
+        </div>
+
+        <div class="sidebar-block">
+          <div class="sidebar-block__head">ترتیب نمایش</div>
+          <div style="padding:.75rem 1rem">
+            <select class="form-select" id="sort-select" onchange="render()" style="font-size:.82rem">
+              <option value="title">الفبایی</option>
+              <option value="grade">صنف</option>
+              <option value="year">سال نشر</option>
+            </select>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main grid -->
+      <main>
+        <div style="margin-bottom:1.25rem;font-size:.88rem;color:var(--muted)" id="results-count"></div>
+        <div class="grid-3" id="books-grid"></div>
+        <div id="pagination-root"></div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+<div id="auth-modal-root"></div>
+
+<script>
+document.getElementById('navbar-root').innerHTML     = renderNavbar('books');
+document.getElementById('footer-root').innerHTML     = renderFooter();
+document.getElementById('auth-modal-root').innerHTML = renderAuthModal();
+
+var currentCat    = 'all';
+var currentSubcat = null;
+var currentGrade  = null;
+var currentPage   = 1;
+var PAGE_SIZE     = 12;
+
+// Read URL param
+var urlCat = new URLSearchParams(window.location.search).get('cat');
+if (urlCat && CATEGORIES[urlCat]) {
+  currentCat = urlCat;
+  document.querySelectorAll('.sidebar-nav-item').forEach(function(el){ el.classList.remove('active'); });
+  // find and activate correct sidebar item
+  document.querySelectorAll('.sidebar-nav-item').forEach(function(el){
+    if (el.textContent.trim().includes(CATEGORIES[urlCat].label.slice(0,4))) el.classList.add('active');
+  });
+  showSubcats(urlCat);
+}
+
+render();
+
+function render() {
+  var books = getFilteredBooks();
+  var sort  = document.getElementById('sort-select').value;
+  books = books.slice().sort(function(a,b){
+    if (sort === 'grade') return (a.grade||99)-(b.grade||99);
+    if (sort === 'year')  return (b.year||'').localeCompare(a.year||'');
+    return (a.title_dari||'').localeCompare(b.title_dari||'');
+  });
+  var total = books.length;
+  var from  = (currentPage-1)*PAGE_SIZE;
+  var page  = books.slice(from, from+PAGE_SIZE);
+
+  document.getElementById('results-count').textContent = UI.formatNum(total) + ' کتاب یافت شد';
+  var grid = document.getElementById('books-grid');
+  grid.innerHTML = page.length
+    ? page.map(UI.renderBookCard.bind(UI)).join('')
+    : '<div class="loading-overlay" style="grid-column:1/-1"><span style="font-size:2rem">📭</span><span>کتابی یافت نشد</span></div>';
+  document.getElementById('pagination-root').innerHTML = UI.renderPagination(currentPage, total, PAGE_SIZE, 'goPage');
+}
+
+function getFilteredBooks() {
+  return FALLBACK_BOOKS.filter(function(b){
+    if (currentCat !== 'all' && b.category !== currentCat) return false;
+    if (currentSubcat && b.subcategory !== currentSubcat) return false;
+    if (currentGrade  && b.grade !== currentGrade)        return false;
+    return true;
+  });
+}
+
+function setCat(cat, el) {
+  document.querySelectorAll('.sidebar-nav-item').forEach(function(e){ e.classList.remove('active'); });
+  el.classList.add('active');
+  currentCat = cat; currentSubcat = null; currentGrade = null; currentPage = 1;
+  var catInfo = CATEGORIES[cat];
+  document.getElementById('page-title').textContent    = catInfo ? catInfo.label : 'همه کتاب‌ها';
+  document.getElementById('page-subtitle').textContent = catInfo ? 'مجموعه ' + catInfo.label + ' به زبان دری' : 'مجموعه کامل کتاب‌های دری';
+  showSubcats(cat);
+  render();
+}
+
+function showSubcats(cat) {
+  var catInfo = CATEGORIES[cat];
+  var subcatBlock = document.getElementById('subcat-block');
+  var gradeBlock  = document.getElementById('grade-block');
+  if (catInfo && catInfo.subcats) {
+    subcatBlock.style.display = 'block';
+    document.getElementById('subcat-head').textContent = catInfo.label + ' — زیردسته';
+    document.getElementById('subcat-list').innerHTML =
+      '<div class="sidebar-nav-item active" onclick="setSubcat(null,this)">همه</div>' +
+      catInfo.subcats.map(function(s){
+        return '<div class="sidebar-nav-item" onclick="setSubcat(\'' + s.key + '\',this)">' + s.label + '</div>';
+      }).join('');
+  } else {
+    subcatBlock.style.display = 'none';
+  }
+  if (cat === 'school') {
+    gradeBlock.style.display = 'block';
+    var html = '';
+    for (var g=1; g<=12; g++) {
+      html += '<button class="chip" onclick="setGrade(' + g + ',this)">صنف ' + UI.formatNum(g) + '</button>';
+    }
+    document.getElementById('grade-list').innerHTML = html;
+  } else {
+    gradeBlock.style.display = 'none';
+  }
+}
+
+function setSubcat(subcat, el) {
+  document.querySelectorAll('#subcat-list .sidebar-nav-item').forEach(function(e){ e.classList.remove('active'); });
+  el.classList.add('active');
+  currentSubcat = subcat; currentPage = 1; render();
+}
+
+function setGrade(grade, el) {
+  if (currentGrade === grade) { el.classList.remove('active'); currentGrade = null; }
+  else {
+    document.querySelectorAll('#grade-list .chip').forEach(function(e){ e.classList.remove('active'); });
+    el.classList.add('active'); currentGrade = grade;
+  }
+  currentPage = 1; render();
+}
+
+function goPage(page) {
+  currentPage = page;
+  window.scrollTo({top:0, behavior:'smooth'});
+  render();
+}
+</script>
+</body>
+</html>

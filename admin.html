@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>پنل مدیریت — کتابخانه آزاد افغانستان</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script>var relativePath = '../';</script>
+  <script src="../js/app.js"></script>
+  <script src="../js/components.js"></script>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<!-- Access guard -->
+<div id="access-denied" style="display:none">
+  <div class="loading-overlay" style="min-height:60vh">
+    <span style="font-size:3rem">🔒</span>
+    <strong>دسترسی محدود</strong>
+    <span style="color:var(--muted)">این صفحه فقط برای مدیر کتابخانه است</span>
+    <a href="../index.html" class="btn btn-primary btn-sm">بازگشت به خانه</a>
+  </div>
+</div>
+
+<!-- Admin UI -->
+<div id="admin-ui" style="display:none">
+  <div style="background:var(--lapis-dk);color:#fff;padding:1rem 0">
+    <div class="container flex-between">
+      <div style="font-size:1.1rem;font-weight:700">⚙️ پنل مدیریت کتابخانه</div>
+      <span style="font-size:.82rem;color:rgba(255,255,255,.6)">seyaramiry.2468@gmail.com</span>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <!-- Admin sidebar -->
+    <nav class="admin-sidebar">
+      <div class="admin-nav-item active" data-panel="dashboard" onclick="showPanel('dashboard',this)">
+        📊 داشبورد
+      </div>
+      <div class="admin-nav-item" data-panel="pending" onclick="showPanel('pending',this)">
+        ⏳ در انتظار بررسی
+        <span class="badge badge-pending" id="pending-count-nav">...</span>
+      </div>
+      <div class="admin-nav-item" data-panel="approved" onclick="showPanel('approved',this)">
+        ✅ تأیید شده
+      </div>
+      <div class="admin-nav-item" data-panel="rejected" onclick="showPanel('rejected',this)">
+        ❌ رد شده
+      </div>
+      <div class="divider" style="margin:.5rem 0"></div>
+      <div class="admin-nav-item" data-panel="books" onclick="showPanel('books',this)">
+        📚 مدیریت کتاب‌ها
+      </div>
+      <div class="admin-nav-item" data-panel="add-book" onclick="showPanel('add-book',this)">
+        ➕ افزودن کتاب
+      </div>
+    </nav>
+
+    <!-- Admin main content -->
+    <main class="admin-main">
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard">
+        <h2 style="margin-bottom:1.5rem">داشبورد</h2>
+        <div class="grid-4" id="stats-grid">
+          <div class="stat-card"><div class="stat-card__num" id="st-books">—</div><div class="stat-card__label">کل کتاب‌ها</div></div>
+          <div class="stat-card"><div class="stat-card__num" id="st-pending">—</div><div class="stat-card__label">در انتظار بررسی</div></div>
+          <div class="stat-card"><div class="stat-card__num" id="st-downloads">—</div><div class="stat-card__label">کل دانلودها</div></div>
+          <div class="stat-card"><div class="stat-card__num" id="st-approved">—</div><div class="stat-card__label">تأیید شده</div></div>
+        </div>
+
+        <div style="margin-top:2rem">
+          <h3 style="margin-bottom:1rem">آخرین ارسال‌ها</h3>
+          <div id="recent-contributions"></div>
+        </div>
+      </div>
+
+      <!-- PENDING -->
+      <div id="panel-pending" style="display:none">
+        <div class="flex-between" style="margin-bottom:1.5rem">
+          <h2>در انتظار بررسی</h2>
+          <button class="btn btn-ghost btn-sm" onclick="loadContributions('pending')">🔄 بروزرسانی</button>
+        </div>
+        <div id="pending-list"></div>
+      </div>
+
+      <!-- APPROVED -->
+      <div id="panel-approved" style="display:none">
+        <h2 style="margin-bottom:1.5rem">ارسال‌های تأیید شده</h2>
+        <div id="approved-list"></div>
+      </div>
+
+      <!-- REJECTED -->
+      <div id="panel-rejected" style="display:none">
+        <h2 style="margin-bottom:1.5rem">ارسال‌های رد شده</h2>
+        <div id="rejected-list"></div>
+      </div>
+
+      <!-- BOOKS MANAGEMENT -->
+      <div id="panel-books" style="display:none">
+        <div class="flex-between" style="margin-bottom:1.5rem">
+          <h2>مدیریت کتاب‌ها</h2>
+          <button class="btn btn-primary btn-sm" onclick="showPanel('add-book',document.querySelector('[data-panel=add-book]'))">➕ افزودن کتاب</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="table" id="books-table">
+            <thead>
+              <tr>
+                <th>عنوان</th>
+                <th>نویسنده</th>
+                <th>دسته</th>
+                <th>صنف</th>
+                <th>دانلود</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="books-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADD BOOK -->
+      <div id="panel-add-book" style="display:none">
+        <h2 style="margin-bottom:1.5rem">➕ افزودن کتاب جدید</h2>
+        <div class="card p-3" style="max-width:700px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">عنوان دری *</label>
+              <input type="text" class="form-input" id="ab-title-dari"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">عنوان انگلیسی</label>
+              <input type="text" class="form-input" id="ab-title-en" dir="ltr"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">نویسنده</label>
+              <input type="text" class="form-input" id="ab-author"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">مترجم</label>
+              <input type="text" class="form-input" id="ab-translator"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">دسته‌بندی *</label>
+              <select class="form-select" id="ab-category" onchange="updateAbSubcats()">
+                <option value="">انتخاب کنید</option>
+                <option value="school">کتاب‌های مکتب</option>
+                <option value="university">کتاب‌های پوهنتون</option>
+                <option value="history">تاریخ افغانستان</option>
+                <option value="philosophy">فلسفه</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">زیردسته</label>
+              <select class="form-select" id="ab-subcategory"><option value="">—</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">صنف (برای کتاب مکتب)</label>
+              <input type="number" class="form-input" id="ab-grade" min="1" max="12"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">تعداد صفحات</label>
+              <input type="number" class="form-input" id="ab-pages"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">سال نشر</label>
+              <input type="text" class="form-input" id="ab-year"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ناشر</label>
+              <input type="text" class="form-input" id="ab-publisher"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">لینک Archive.org *</label>
+            <input type="url" class="form-input" id="ab-archive-url" dir="ltr" placeholder="https://archive.org/details/..."/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">لینک Embed (برای خواندن آنلاین)</label>
+            <input type="url" class="form-input" id="ab-embed-url" dir="ltr" placeholder="https://archive.org/embed/..."/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">توضیح</label>
+            <textarea class="form-textarea" id="ab-description"></textarea>
+          </div>
+          <div style="display:flex;gap:.75rem">
+            <div class="form-group" style="flex:1">
+              <label class="form-label">ایموجی جلد</label>
+              <input type="text" class="form-input" id="ab-emoji" value="📘" style="font-size:1.5rem;text-align:center"/>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label class="form-label">رنگ پس‌زمینه جلد</label>
+              <input type="color" class="form-input" id="ab-color" value="#E3F2FD" style="height:42px;padding:.25rem"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <label style="display:flex;align-items:center;gap:.4rem;font-size:.88rem;cursor:pointer">
+              <input type="checkbox" id="ab-featured"/> کتاب برگزیده
+            </label>
+          </div>
+          <div style="margin-top:1.25rem">
+            <button class="btn btn-primary" onclick="addBook()">➕ افزودن به کتابخانه</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Review modal -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal">
+    <div class="modal__head">
+      <span class="modal__title">بررسی ارسال</span>
+      <button class="modal__close" onclick="UI.closeModal('review-modal')">✕</button>
+    </div>
+    <div class="modal__body" id="review-modal-body"></div>
+    <div class="modal__footer">
+      <button class="btn btn-ghost" onclick="UI.closeModal('review-modal')">بستن</button>
+      <button class="btn btn-danger" style="background:var(--danger);color:#fff;border:none;padding:.55rem 1.25rem;border-radius:var(--radius-md)" onclick="reviewContrib('rejected')">❌ رد کردن</button>
+      <button class="btn btn-primary" style="background:var(--success);border-color:var(--success)" onclick="reviewContrib('approved')">✅ تأیید</button>
+    </div>
+  </div>
+</div>
+
+<div id="auth-modal-root"></div>
+
+<script>
+let currentReviewId = null;
+
+document.getElementById('navbar-root').innerHTML     = renderNavbar('');
+document.getElementById('auth-modal-root').innerHTML = renderAuthModal();
+
+// Show admin UI immediately — when Supabase is not configured, open for demo
+if (!SUPABASE_CONFIGURED) {
+  document.getElementById('access-denied').style.display = 'none';
+  document.getElementById('admin-ui').style.display = 'block';
+  document.addEventListener('DOMContentLoaded', loadDashboard);
+} else {
+  // Wait for auth — initSupabase first then check auth
+  initSupabase().then(function() {
+    Auth.onAuthStateChange(function(event, session) {
+      var user = session && session.user;
+      if (!user || !Auth.isAdmin(user.email)) {
+        document.getElementById('access-denied').style.display = 'block';
+        document.getElementById('admin-ui').style.display = 'none';
+      } else {
+        document.getElementById('access-denied').style.display = 'none';
+        document.getElementById('admin-ui').style.display = 'block';
+        loadDashboard();
+      }
+    });
+  });
+}
+
+function showPanel(name, el) {
+  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+  el?.classList.add('active');
+  document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
+  document.getElementById(`panel-${name}`).style.display = 'block';
+
+  if (name === 'pending')  loadContributions('pending');
+  if (name === 'approved') loadContributions('approved');
+  if (name === 'rejected') loadContributions('rejected');
+  if (name === 'books')    loadBooksTable();
+}
+
+async function loadDashboard() {
+  const stats = await API.getStats();
+  document.getElementById('st-books').textContent     = UI.formatNum(stats.books);
+  document.getElementById('st-pending').textContent   = UI.formatNum(stats.contributions);
+  document.getElementById('st-downloads').textContent = UI.formatNum(stats.downloads);
+  document.getElementById('pending-count-nav').textContent = stats.contributions || '۰';
+
+  // Recent contributions
+  const contribs = await API.getContributions('pending');
+  const recent = document.getElementById('recent-contributions');
+  if (!contribs.length) {
+    recent.innerHTML = '<p class="text-muted">هیچ ارسال در انتظاری وجود ندارد</p>';
+    return;
+  }
+  recent.innerHTML = contribs.slice(0,5).map(c => renderContribRow(c, true)).join('');
+}
+
+async function loadContributions(status) {
+  const listEl = document.getElementById(`${status}-list`);
+  listEl.innerHTML = '<div class="loading-overlay" style="min-height:200px"><div class="spinner"></div></div>';
+  const contribs = await API.getContributions(status);
+  if (!contribs.length) {
+    listEl.innerHTML = '<p class="text-muted" style="padding:1rem">هیچ موردی یافت نشد</p>';
+    return;
+  }
+  listEl.innerHTML = contribs.map(c => renderContribRow(c, status === 'pending')).join('');
+}
+
+function renderContribRow(c, showActions) {
+  const catInfo = CATEGORIES[c.category] || {};
+  return `
+  <div class="card" style="padding:1rem;margin-bottom:.75rem">
+    <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:600;margin-bottom:.25rem">${c.title_dari}</div>
+        ${c.title_original ? `<div style="font-size:.8rem;color:var(--muted);direction:ltr">${c.title_original}</div>` : ''}
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.25rem">
+          ${c.author} · مترجم: ${c.translator}
+        </div>
+        <div style="margin-top:.4rem;display:flex;gap:.4rem;flex-wrap:wrap">
+          ${UI.badgeFor(c.category)}
+          <span class="badge badge-${c.status}">${c.status === 'pending' ? 'در انتظار' : c.status === 'approved' ? 'تأیید شده' : 'رد شده'}</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.35rem">
+          ارسال‌کننده: ${c.submitter_name} · ${new Date(c.created_at).toLocaleDateString('fa-IR')}
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-shrink:0">
+        ${c.file_url ? `<a href="${c.file_url}" target="_blank" class="btn btn-ghost btn-sm">🔗 فایل</a>` : ''}
+        ${showActions ? `<button class="btn btn-primary btn-sm" onclick="openReview('${c.id}')">بررسی</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function openReview(id) {
+  currentReviewId = id;
+  const all = await API.getContributions('pending');
+  const c = all.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('review-modal-body').innerHTML = `
+    <table style="width:100%;font-size:.88rem">
+      <tr><td style="padding:.4rem 0;color:var(--muted);width:120px">عنوان دری</td><td><strong>${c.title_dari}</strong></td></tr>
+      ${c.title_original ? `<tr><td style="padding:.4rem 0;color:var(--muted)">عنوان اصلی</td><td dir="ltr">${c.title_original}</td></tr>` : ''}
+      <tr><td style="padding:.4rem 0;color:var(--muted)">نویسنده</td><td>${c.author}</td></tr>
+      <tr><td style="padding:.4rem 0;color:var(--muted)">مترجم</td><td>${c.translator}</td></tr>
+      <tr><td style="padding:.4rem 0;color:var(--muted)">دسته</td><td>${UI.badgeFor(c.category)}</td></tr>
+      <tr><td style="padding:.4rem 0;color:var(--muted)">ارسال‌کننده</td><td>${c.submitter_name} (${c.submitter_email})</td></tr>
+      ${c.file_url ? `<tr><td style="padding:.4rem 0;color:var(--muted)">فایل</td><td><a href="${c.file_url}" target="_blank" style="color:var(--lapis);direction:ltr;word-break:break-all">${c.file_url}</a></td></tr>` : ''}
+      ${c.description ? `<tr><td style="padding:.4rem 0;color:var(--muted)">توضیح</td><td>${c.description}</td></tr>` : ''}
+    </table>
+    <div style="margin-top:1rem">
+      <label class="form-label">یادداشت مدیر (اختیاری)</label>
+      <textarea class="form-textarea" id="admin-note" placeholder="دلیل رد یا توضیح..." style="min-height:70px"></textarea>
+    </div>`;
+
+  UI.openModal('review-modal');
+}
+
+async function reviewContrib(status) {
+  if (!currentReviewId) return;
+  const note = document.getElementById('admin-note')?.value.trim();
+
+  // Update in Supabase
+  await API.updateContribution(currentReviewId, { status, admin_notes: note, reviewed_by: ADMIN_EMAIL });
+
+  // Send email notification via mailto fallback
+  const all = await API.getContributions(status === 'approved' ? 'approved' : 'rejected');
+  UI.closeModal('review-modal');
+  UI.toast(status === 'approved' ? 'کتاب تأیید شد ✅' : 'کتاب رد شد ❌', status === 'approved' ? 'success' : 'error');
+  loadContributions('pending');
+  loadDashboard();
+}
+
+async function loadBooksTable() {
+  const tbody = document.getElementById('books-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem"><div class="spinner"></div></td></tr>';
+  const { data } = await API.getBooks({ limit: 100 });
+  const books = data?.length ? data : FALLBACK_BOOKS;
+  tbody.innerHTML = books.map(b => `
+    <tr>
+      <td><strong>${b.title_dari}</strong>${b.title_en ? `<div style="font-size:.75rem;color:var(--muted);direction:ltr">${b.title_en}</div>` : ''}</td>
+      <td style="font-size:.85rem">${b.author||'—'}</td>
+      <td>${UI.badgeFor(b.category)}</td>
+      <td style="font-size:.85rem">${b.grade ? UI.formatNum(b.grade) : '—'}</td>
+      <td style="font-size:.85rem">${UI.formatNum(b.downloads||0)}</td>
+      <td>
+        <div style="display:flex;gap:.4rem">
+          <a href="book.html?id=${b.id}" class="btn btn-ghost btn-sm" target="_blank">👁</a>
+          ${b.archive_url ? `<a href="${b.archive_url}" class="btn btn-ghost btn-sm" target="_blank">🔗</a>` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function updateAbSubcats() {
+  const cat = document.getElementById('ab-category').value;
+  const el  = document.getElementById('ab-subcategory');
+  const catInfo = CATEGORIES[cat];
+  el.innerHTML = catInfo?.subcats
+    ? '<option value="">اختیاری</option>' + catInfo.subcats.map(s => `<option value="${s.key}">${s.label}</option>`).join('')
+    : '<option value="">—</option>';
+}
+
+async function addBook() {
+  const titleDari = document.getElementById('ab-title-dari').value.trim();
+  const category  = document.getElementById('ab-category').value;
+  const archiveUrl= document.getElementById('ab-archive-url').value.trim();
+  if (!titleDari || !category || !archiveUrl) {
+    UI.toast('لطفاً فیلدهای ضروری (*) را پر کنید', 'error');
+    return;
+  }
+  const embedUrl = document.getElementById('ab-embed-url').value.trim()
+    || archiveUrl.replace('/details/', '/embed/');
+
+  const book = {
+    title_dari:   titleDari,
+    title_en:     document.getElementById('ab-title-en').value.trim(),
+    author:       document.getElementById('ab-author').value.trim(),
+    translator:   document.getElementById('ab-translator').value.trim(),
+    category,
+    subcategory:  document.getElementById('ab-subcategory').value,
+    grade:        parseInt(document.getElementById('ab-grade').value) || null,
+    pages:        parseInt(document.getElementById('ab-pages').value) || null,
+    year:         document.getElementById('ab-year').value.trim(),
+    publisher:    document.getElementById('ab-publisher').value.trim(),
+    description:  document.getElementById('ab-description').value.trim(),
+    archive_url:  archiveUrl,
+    gdrive_embed: embedUrl,
+    cover_emoji:  document.getElementById('ab-emoji').value || '📘',
+    cover_color:  document.getElementById('ab-color').value,
+    is_featured:  document.getElementById('ab-featured').checked,
+    is_published: true,
+    source:       'archive.org'
+  };
+
+  if (!supabase) {
+    UI.toast('Supabase هنوز پیکربندی نشده — کتاب در حالت demo اضافه نمی‌شود', 'error');
+    return;
+  }
+
+  const { error } = await supabase.from('books').insert([book]);
+  if (error) { UI.toast('خطا: ' + error.message, 'error'); return; }
+  UI.toast('کتاب با موفقیت اضافه شد ✅', 'success');
+  showPanel('books', document.querySelector('[data-panel=books]'));
+}
+</script>
+</body>
+</html>

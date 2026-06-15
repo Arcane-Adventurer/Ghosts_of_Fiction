@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ارسال کتاب — کتابخانه آزاد افغانستان</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script>var relativePath = '../';</script>
+  <script src="../js/app.js"></script>
+  <script src="../js/components.js"></script>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<div style="background:var(--lapis-dk);color:#fff;padding:2.5rem 0">
+  <div class="container">
+    <div class="breadcrumb" style="color:rgba(255,255,255,.5)">
+      <a href="../index.html" style="color:rgba(255,255,255,.5)">خانه</a>
+      <span class="sep">›</span><span style="color:#fff">ارسال کتاب</span>
+    </div>
+    <h1 style="color:#fff;margin:.5rem 0 .35rem">🤝 در ساختن کتابخانه شریک باشید</h1>
+    <p style="color:rgba(255,255,255,.65);font-size:.92rem;max-width:600px">اگر کتابی به دری ترجمه کرده‌اید یا لینک کتاب رایگانی دارید، آن را اینجا ارسال کنید.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:2rem;align-items:start">
+
+      <div class="card p-3" id="form-card">
+        <!-- Steps -->
+        <div class="contrib-steps" style="margin-bottom:2rem">
+          <div class="contrib-step active" id="si-1"><div class="contrib-step__num">۱</div><div class="contrib-step__label">اطلاعات کتاب</div></div>
+          <div class="contrib-step" id="si-2"><div class="contrib-step__num">۲</div><div class="contrib-step__label">لینک فایل</div></div>
+          <div class="contrib-step" id="si-3"><div class="contrib-step__num">۳</div><div class="contrib-step__label">اطلاعات شما</div></div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="step-1">
+          <h3 style="margin-bottom:1.25rem">اطلاعات کتاب</h3>
+          <div class="form-group"><label class="form-label">عنوان کتاب به دری *</label><input type="text" class="form-input" id="f-title"/></div>
+          <div class="form-group"><label class="form-label">عنوان اصلی (اگر ترجمه است)</label><input type="text" class="form-input" id="f-title-orig" dir="ltr"/></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group"><label class="form-label">نویسنده *</label><input type="text" class="form-input" id="f-author"/></div>
+            <div class="form-group"><label class="form-label">مترجم *</label><input type="text" class="form-input" id="f-translator"/></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">دسته‌بندی *</label>
+            <select class="form-select" id="f-cat">
+              <option value="">انتخاب کنید...</option>
+              <option value="school">📘 کتاب‌های مکتب</option>
+              <option value="university">🎓 کتاب‌های پوهنتون</option>
+              <option value="history">🏛️ تاریخ افغانستان</option>
+              <option value="philosophy">🧠 فلسفه</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">توضیح کوتاه</label><textarea class="form-textarea" id="f-desc" placeholder="چند جمله درباره محتوای کتاب..."></textarea></div>
+          <button class="btn btn-primary" onclick="goStep(2)">مرحله بعد ←</button>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="step-2" style="display:none">
+          <h3 style="margin-bottom:1.25rem">لینک فایل کتاب</h3>
+          <div style="padding:1rem;background:var(--surface2);border-radius:var(--radius-md);margin-bottom:1.5rem;font-size:.85rem;line-height:1.8">
+            <strong>📌 راهنمای آپلود در Google Drive:</strong>
+            <ol style="margin-top:.5rem;padding-right:1.25rem">
+              <li>فایل PDF را در Google Drive آپلود کنید</li>
+              <li>راست‌کلیک → اشتراک‌گذاری → هرکسی با لینک</li>
+              <li>لینک را کپی و در فیلد زیر بچسبانید</li>
+            </ol>
+          </div>
+          <div class="form-group"><label class="form-label">لینک Google Drive یا archive.org *</label><input type="url" class="form-input" id="f-url" placeholder="https://drive.google.com/..." dir="ltr"/></div>
+          <div class="form-group"><label class="form-label">یادداشت منبع (اختیاری)</label><textarea class="form-textarea" id="f-source" style="min-height:70px"></textarea></div>
+          <div style="display:flex;gap:.75rem">
+            <button class="btn btn-ghost" onclick="goStep(1)">→ قبلی</button>
+            <button class="btn btn-primary" onclick="goStep(3)">مرحله بعد ←</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="step-3" style="display:none">
+          <h3 style="margin-bottom:1.25rem">اطلاعات شما</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group"><label class="form-label">نام *</label><input type="text" class="form-input" id="f-name"/></div>
+            <div class="form-group"><label class="form-label">ایمیل *</label><input type="email" class="form-input" id="f-email" dir="ltr"/><div class="form-hint">نتیجه بررسی به این ایمیل ارسال می‌شود</div></div>
+          </div>
+          <div style="padding:1rem;background:#E8F5E9;border-radius:var(--radius-md);border-right:3px solid #4CAF50;margin-bottom:1.25rem;font-size:.85rem">
+            ✅ با ارسال تأیید می‌کنید که این کتاب برای اشتراک‌گذاری رایگان مجاز است.
+          </div>
+          <div style="display:flex;gap:.75rem">
+            <button class="btn btn-ghost" onclick="goStep(2)">→ قبلی</button>
+            <button class="btn btn-gold btn-lg" id="submit-btn" onclick="submitForm()">📤 ارسال کتاب</button>
+          </div>
+        </div>
+
+        <!-- Success -->
+        <div id="step-success" style="display:none;text-align:center;padding:2rem 0">
+          <div style="font-size:4rem;margin-bottom:1rem">🎉</div>
+          <h3 style="color:var(--success);margin-bottom:.75rem">کتاب شما ارسال شد!</h3>
+          <p style="color:var(--ink-soft);max-width:400px;margin:0 auto 1.5rem">پس از بررسی توسط مدیر، نتیجه به ایمیل شما ارسال می‌شود.</p>
+          <a href="books.html" class="btn btn-primary">مشاهده کتاب‌ها ←</a>
+        </div>
+      </div>
+
+      <aside>
+        <div class="sidebar-block" style="margin-bottom:1rem">
+          <div class="sidebar-block__head">📋 فرآیند بررسی</div>
+          <div style="padding:1rem;font-size:.85rem;line-height:1.8;color:var(--ink-soft)">
+            <div style="display:flex;gap:.6rem;margin-bottom:.5rem"><span style="color:var(--gold);font-weight:700">۱.</span><span>فرم را پر کرده ارسال کنید</span></div>
+            <div style="display:flex;gap:.6rem;margin-bottom:.5rem"><span style="color:var(--gold);font-weight:700">۲.</span><span>مدیر محتوا را بررسی می‌کند</span></div>
+            <div style="display:flex;gap:.6rem;margin-bottom:.5rem"><span style="color:var(--gold);font-weight:700">۳.</span><span>نتیجه به ایمیل شما می‌رسد</span></div>
+            <div style="display:flex;gap:.6rem"><span style="color:var(--success);font-weight:700">۴.</span><span>پس از تأیید در کتابخانه نمایش داده می‌شود</span></div>
+          </div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-block__head">❓ تماس</div>
+          <div style="padding:1rem;font-size:.85rem;color:var(--ink-soft)">
+            <p>📧 <a href="mailto:seyaramiry.2468@gmail.com" style="color:var(--lapis);word-break:break-all;font-size:.8rem">seyaramiry.2468@gmail.com</a></p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<div id="footer-root"></div>
+<div id="auth-modal-root"></div>
+
+<script>
+document.getElementById('navbar-root').innerHTML     = renderNavbar('contribute');
+document.getElementById('footer-root').innerHTML     = renderFooter();
+document.getElementById('auth-modal-root').innerHTML = renderAuthModal();
+
+var currentStep = 1;
+
+function goStep(step) {
+  if (step > currentStep) {
+    if (currentStep === 1) {
+      if (!document.getElementById('f-title').value.trim() || !document.getElementById('f-author').value.trim() || !document.getElementById('f-translator').value.trim() || !document.getElementById('f-cat').value) {
+        UI.toast('لطفاً همه فیلدهای ضروری (*) را پر کنید', 'error'); return;
+      }
+    }
+    if (currentStep === 2 && !document.getElementById('f-url').value.trim()) {
+      UI.toast('لطفاً لینک فایل را وارد کنید', 'error'); return;
+    }
+  }
+  for (var s=1; s<=3; s++) {
+    document.getElementById('step-'+s).style.display = 'none';
+    var ind = document.getElementById('si-'+s);
+    ind.classList.remove('active','done');
+    if (s < step) ind.classList.add('done');
+    else if (s === step) ind.classList.add('active');
+  }
+  document.getElementById('step-'+step).style.display = 'block';
+  currentStep = step;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function submitForm() {
+  var name  = document.getElementById('f-name').value.trim();
+  var email = document.getElementById('f-email').value.trim();
+  if (!name || !email) { UI.toast('لطفاً نام و ایمیل را وارد کنید','error'); return; }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'در حال ارسال...';
+
+  var payload = {
+    submitter_name:  name,
+    submitter_email: email,
+    title_dari:      document.getElementById('f-title').value.trim(),
+    title_original:  document.getElementById('f-title-orig').value.trim(),
+    author:          document.getElementById('f-author').value.trim(),
+    translator:      document.getElementById('f-translator').value.trim(),
+    category:        document.getElementById('f-cat').value,
+    description:     document.getElementById('f-desc').value.trim(),
+    file_url:        document.getElementById('f-url').value.trim(),
+    source_notes:    document.getElementById('f-source').value.trim(),
+    status:          'pending'
+  };
+
+  var result = await API.submitContribution(payload);
+
+  // Always open mailto as fallback/notification to admin
+  var subject = encodeURIComponent('کتاب جدید: ' + payload.title_dari);
+  var body = encodeURIComponent(
+    'عنوان دری: ' + payload.title_dari + '\n' +
+    'نویسنده: ' + payload.author + '\n' +
+    'مترجم: ' + payload.translator + '\n' +
+    'دسته‌بندی: ' + payload.category + '\n' +
+    'لینک: ' + payload.file_url + '\n' +
+    'ارسال‌کننده: ' + payload.submitter_name + ' <' + payload.submitter_email + '>\n' +
+    (payload.description ? 'توضیح: ' + payload.description : '')
+  );
+  window.location.href = 'mailto:seyaramiry.2468@gmail.com?subject=' + subject + '&body=' + body;
+
+  document.getElementById('step-3').style.display = 'none';
+  document.getElementById('step-success').style.display = 'block';
+}
+</script>
+</body>
+</html>
