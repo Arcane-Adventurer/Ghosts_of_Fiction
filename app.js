@@ -4,8 +4,8 @@
 
 // ── Config ───────────────────────────────────────────────────
 // Replace these two lines with your real Supabase values when ready
-const SUPABASE_URL     = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL     = https://gdsmgruncdndliiyyikx.supabase.co/rest/v1/;
+const SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdkc21ncnVuY2RuZGxpaXl5aWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNDE2NjYsImV4cCI6MjA5NjkxNzY2Nn0.wcEmMaRLVFzkh4ZkcR04AGi4DXj0JWQzQlP7PE-_bXI;
 const ADMIN_EMAIL      = 'seyaramiry.2468@gmail.com';
 
 // True only after you paste in real credentials
